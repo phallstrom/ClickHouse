@@ -20,20 +20,20 @@ namespace
 
 std::vector<std::pair<String, String>> describeJoinActions(const JoinPtr & join)
 {
-    std::vector<std::pair<String, String>> desctiption;
+    std::vector<std::pair<String, String>> description;
     const auto & table_join = join->getTableJoin();
 
-    desctiption.emplace_back("Type", toString(table_join.kind()));
-    desctiption.emplace_back("Strictness", toString(table_join.strictness()));
-    desctiption.emplace_back("Algorithm", join->getName());
+    description.emplace_back("Type", toString(table_join.kind()));
+    description.emplace_back("Strictness", toString(table_join.strictness()));
+    description.emplace_back("Algorithm", join->getName());
 
     if (table_join.strictness() == JoinStrictness::Asof)
-        desctiption.emplace_back("ASOF inequality", toString(table_join.getAsofInequality()));
+        description.emplace_back("ASOF inequality", toString(table_join.getAsofInequality()));
 
     if (!table_join.getClauses().empty())
-        desctiption.emplace_back("Clauses", table_join.formatClauses(table_join.getClauses(), true /*short_format*/));
+        description.emplace_back("Clauses", table_join.formatClauses(table_join.getClauses(), true /*short_format*/));
 
-    return desctiption;
+    return description;
 }
 
 }
