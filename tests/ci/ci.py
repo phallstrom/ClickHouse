@@ -510,25 +510,6 @@ def main() -> int:
                     futures.append(future)
             concurrent.futures.wait(futures)
 
-        for job in job_digests:
-            digest = job_digests[job]
-            num_batches: int = CI_CONFIG.get_job_config(job).num_batches  # type: ignore[no-redef]
-            for batch in range(num_batches):  # type: ignore
-                success_flag_name = get_file_flag_name(job, digest, batch, num_batches)
-                if success_flag_name in files:
-                    print(f"Going to re-create GH status for job [{job}]")
-                    job_meta = SuccessJobMeta.create_from_file(
-                        f"{TEMP_PATH}/{success_flag_name}"
-                    )
-                    commit.create_status(
-                        state="success",
-                        target_url=job_meta.report_url,
-                        description=f"Reused from [{job_meta.ref}-{job_meta.sha[0:8]}]",
-                        context=get_check_name(
-                            job, batch=batch, num_batches=num_batches
-                        ),
-                    )
-                    print(f"GH status re-created from file [{success_flag_name}]")
         print("Going to update overall CI report")
         set_status_comment(commit, pr_info)
         print("... CI report update - done")
