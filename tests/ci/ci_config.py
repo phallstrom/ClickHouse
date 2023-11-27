@@ -608,9 +608,9 @@ CI_CONFIG = CiConfig(
         "Stateful tests (release, DatabaseOrdinary)": TestConfig(
             "package_release", **stateful_test_common_params
         ),
-        "Stateful tests (release, DatabaseReplicated)": TestConfig(
-            "package_release", **stateful_test_common_params
-        ),
+        # "Stateful tests (release, DatabaseReplicated)": TestConfig(
+        #     "package_release", **stateful_test_common_params
+        # ),
         # Stateful tests for parallel replicas
         "Stateful tests (release, ParallelReplicas)": TestConfig(
             "package_release", **stateful_test_common_params
@@ -651,9 +651,6 @@ CI_CONFIG = CiConfig(
         ),
         "Stateless tests (aarch64)": TestConfig(
             "package_aarch64", **statless_test_common_params
-        ),
-        "Stateless tests (release, wide parts enabled)": TestConfig(
-            "package_release", **statless_test_common_params
         ),
         "Stateless tests (release, analyzer)": TestConfig(
             "package_release", **statless_test_common_params

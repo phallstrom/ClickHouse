@@ -23,6 +23,8 @@ from commit_status_helper import get_commit, set_status_comment
 from get_robot_token import get_best_robot_token
 from pr_info import PRInfo
 from ci_config import CI_CONFIG
+from git_helper import Git, Runner as GitRunner, GIT_PREFIX
+from version_helper import get_version_from_repo
 
 
 class SuccessJobMeta:
@@ -302,7 +304,28 @@ def main() -> int:
     s3 = S3Helper()
 
     if args.configure:
+        GR = GitRunner()
+        pr_info = PRInfo()
+
         docker_data = {}
+        git_ref = GR.run(f"{GIT_PREFIX} rev-parse HEAD")
+
+        # let's get CH version
+        version = get_version_from_repo(git=Git(True)).string
+        print(f"Got CH version for this commit: [{version}]")
+
+        # if '#no-merge-commit' is set in commit message - set git ref to PR branch head to avoid merge-commit
+        if pr_info.number != 0:
+            message = GR.run(
+                f"{GIT_PREFIX} log origin/{pr_info.head_ref} --format=%B -n 1"
+            )
+            if "#no-merge-commit" in message:
+                GR.run(f"{GIT_PREFIX} checkout -f origin/{pr_info.head_ref}")
+                git_ref = GR.run(f"{GIT_PREFIX} rev-parse HEAD")
+                print(
+                    "#no-merge-commit is set in commit message - Setting git ref to PR branch HEAD to not use merge commit"
+                )
+
         if not args.skip_docker:
             # generate docker jobs data
             docker_digester = DockerDigester()
@@ -414,6 +437,8 @@ def main() -> int:
                 }
         # conclude results
         if not args.skip_jobs:
+            result["git_ref"] = git_ref
+            result["version"] = version
             result["build"] = build_digest
             result["docs"] = docs_digest
             result["jobs_data"] = jobs_data
@@ -463,9 +488,6 @@ def main() -> int:
             for batch in range(num_batches):  # type: ignore
                 success_flag_name = get_file_flag_name(job, digest, batch, num_batches)
                 if success_flag_name in files:
-                    if os.path.getsize(f"{TEMP_PATH}/{success_flag_name}") == 0:
-                        # FIXME: remove if after transition
-                        continue
                     print(f"Going to re-create GH status for job [{job}]")
                     job_meta = SuccessJobMeta.create_from_file(
                         f"{TEMP_PATH}/{success_flag_name}"
@@ -491,7 +513,7 @@ def main() -> int:
     elif args.post:
         if is_build_job(args.job_name):
             assert indata, "Run config must be provided via --infile"
-            report_path = Path(TEMP_PATH) # build-check.py stores report in TEMP_PATH
+            report_path = Path(TEMP_PATH)  # build-check.py stores report in TEMP_PATH
             assert report_path.is_dir(), f"File [{report_path}] is not a dir"
             files = list(report_path.glob(f"*{args.job_name}.json"))  # type: ignore[arg-type]
             assert len(files) == 1, f"Which is the report file: {files}?"
@@ -527,7 +549,7 @@ def main() -> int:
             stderr=sys.stderr,
             text=True,
             check=False,
-            shell=True
+            shell=True,
         )
         if process.returncode == 0:
             print(f"Run action done for: [{args.job_name}]")

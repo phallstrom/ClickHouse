@@ -11,11 +11,6 @@ name: Build docker images
         required: false
         type: boolean
         default: false
-      git_ref:
-        description: commit to use, merge commit for pr or head
-        required: false
-        type: string
-        default: ${{ github.event.after }} # no merge commit
 jobs:
   DockerBuildAarch64:
     runs-on: [self-hosted, style-checker-aarch64]
@@ -29,7 +24,7 @@ jobs:
       - name: Check out repository code
         uses: ClickHouse/checkout@v1
         with:
-          ref: ${{ inputs.git_ref }}
+          ref: ${{ fromJson(inputs.data).git_ref }}
       - name: Build images
         run: |
           python3 "${GITHUB_WORKSPACE}/tests/ci/docker_images_check.py" \
@@ -48,7 +43,7 @@ jobs:
       - name: Check out repository code
         uses: ClickHouse/checkout@v1
         with:
-          ref: ${{ github.event.after }}
+          ref: ${{ fromJson(inputs.data).git_ref }}
       - name: Build images
         run: |
           python3 "${GITHUB_WORKSPACE}/tests/ci/docker_images_check.py" \
@@ -63,6 +58,8 @@ jobs:
     steps:
       - name: Check out repository code
         uses: ClickHouse/checkout@v1
+        with:
+          ref: ${{ fromJson(inputs.data).git_ref }}
       - name: Build images
         run: |
           cd "$GITHUB_WORKSPACE/tests/ci"

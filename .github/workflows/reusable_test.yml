@@ -66,7 +66,7 @@ jobs:
         uses: ClickHouse/checkout@v1
         with:
           clear-repository: true
-          ref: ${{ github.event.after }}
+          ref: ${{ fromJson(inputs.data).git_ref }}
           submodules: ${{inputs.submodules}}
           fetch-depth: ${{inputs.checkout_depth}}
           filter: tree:0
